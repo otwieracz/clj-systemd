@@ -60,3 +60,10 @@
    (start-stop-unit instance-type :restart service-name start-mode))
   ([service-name start-mode]
    (start-unit :system service-name start-mode)))
+
+(defn reload
+  "Reload systemd daemon"
+  ([instance-type]
+   (.reload (get-manager instance-type)))
+  ([]
+   (reload :system)))
