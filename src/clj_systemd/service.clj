@@ -4,10 +4,11 @@
   (:require [clojure.spec.alpha :as spec]
             [clojure.string :as string]))
 
-(spec/def ::main-pid pos-int?)
+(spec/def ::pid (spec/and int? #(not (neg-int? %))))
+(spec/def ::main-pid ::pid)
 (spec/def ::bus-name string?)
 ;; CAPABILITY_BOUNDING_SET = "CapabilityBoundingSet";
-(spec/def ::control-pid pos-int?)
+(spec/def ::control-pid ::pid)
 ;; DELEGATE = "Delegate";
 ;; DELEGATE_CONTROLLERS = "DelegateControllers";
 ;; DEVICE_ALLOW = "DeviceAllow";
@@ -16,7 +17,7 @@
 (spec/def ::file-path string?)
 (spec/def ::prefixed boolean?)
 (spec/def ::environment-file (spec/keys :req-un [::file-path ::prefixed]))
-;; ENVIRONMENT_FILES = "EnvironmentFiles";
+(spec/def ::environment-files (spec/coll-of ::environment-file))
 ;; EXEC_MAIN_CODE = "ExecMainCode";
 ;; EXEC_MAIN_EXIT_TIMESTAMP = "ExecMainExitTimestamp";
 ;; EXEC_MAIN_EXIT_TIMESTAMP_MONOTONIC = "ExecMainExitTimestampMonotonic";
@@ -39,7 +40,6 @@
 ;; INACCESSIBLE_PATHS = "InaccessiblePaths";
 ;; KILL_MODE = "KillMode";
 ;; KILL_SIGNAL = "KillSignal";
-;; MAIN_PID = "MainPID";
 ;; MOUNT_FLAGS = "MountFlags";
 ;; NFILE_DESCRIPTOR_STORE = "NFileDescriptorStore";
 ;; NICE = "Nice";
@@ -58,7 +58,7 @@
 ;; RESTART_FORCE_EXIT_STATUS = "RestartForceExitStatus";
 ;; RESTART_PREVENT_EXIT_STATUS = "RestartPreventExitStatus";
 ;; RESTART_USEC = "RestartUSec";
-;; RESULT = "Result";
+(spec/def ::result string?)
 ;; ROOT_DIRECTORY = "RootDirectory";
 ;; ROOT_DIRECTORY_START_ONLY = "RootDirectoryStartOnly";
 ;; RUNTIME_MAX_USEC = "RuntimeMaxUSec";
@@ -68,7 +68,7 @@
 ;; SEND_SIGKILL = "SendSIGKILL";
 ;; SLICE = "Slice";
 ;; STATUS_ERRNO = "StatusErrno";
-;; STATUS_TEXT = "StatusText";
+(spec/def ::status-text string?)
 ;; SUCCESS_EXIT_STATUS = "SuccessExitStatus";
 ;; SUPPLEMENTARY_GROUPS = "SupplementaryGroups";
 ;; SYSLOG_IDENTIFIER = "SyslogIdentifier";
@@ -94,7 +94,7 @@
 ;; WATCHDOG_USEC = "WatchdogUSec";
 ;; WORKING_DIRECTORY = "WorkingDirectory";
 
-(spec/def ::service (spec/keys :req-un [::main-pid ::environment]))
+(spec/def ::service (spec/keys :req-un [::main-pid ::environment ::environment-files ::status-text ::result]))
 
 (spec/def ::service-instance #(= (type %) de.thjom.java.systemd.Service))
 
@@ -119,6 +119,9 @@
   {:pre [(spec/valid? ::service-instance service-instance)]
    :post [(spec/valid? ::service %)]}
   {:main-pid (.getMainPID service-instance)
-   :environment (get-environment service-instance)})
+   :environment (get-environment service-instance)
+   :environment-files (get-environment-files service-instance)
+   :status-text (.getStatusText service-instance)
+   :result (.getResult service-instance)})
 
 
