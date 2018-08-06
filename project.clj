@@ -5,4 +5,5 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [com.github.thjomnx/java-systemd "1.1.0"]
-                 [me.raynes/fs "1.4.6"]])
+                 [me.raynes/fs "1.4.6"]
+                 [clj-time "0.14.4"]])

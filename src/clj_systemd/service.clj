@@ -2,7 +2,8 @@
   (:import (de.thjom.java.systemd Service)
            (de.thjom.java.systemd.types EnvironmentFile))
   (:require [clojure.spec.alpha :as spec]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clj-systemd.unit :as unit]))
 
 (spec/def ::pid (spec/and int? #(not (neg-int? %))))
 (spec/def ::main-pid ::pid)
@@ -24,7 +25,7 @@
 ;; EXEC_MAIN_PID = "ExecMainPID";
 ;; EXEC_MAIN_START_TIMESTAMP = "ExecMainStartTimestamp";
 ;; EXEC_MAIN_START_TIMESTAMP_MONOTONIC = "ExecMainStartTimestampMonotonic";
-;; EXEC_MAIN_STATUS = "ExecMainStatus";
+(spec/def ::exec-main-status int?)
 ;; EXEC_RELOAD = "ExecReload";
 ;; EXEC_START = "ExecStart";
 ;; EXEC_START_POST = "ExecStartPost";
@@ -58,7 +59,7 @@
 ;; RESTART_FORCE_EXIT_STATUS = "RestartForceExitStatus";
 ;; RESTART_PREVENT_EXIT_STATUS = "RestartPreventExitStatus";
 ;; RESTART_USEC = "RestartUSec";
-(spec/def ::result string?)
+;; RESULT = "Result";
 ;; ROOT_DIRECTORY = "RootDirectory";
 ;; ROOT_DIRECTORY_START_ONLY = "RootDirectoryStartOnly";
 ;; RUNTIME_MAX_USEC = "RuntimeMaxUSec";
@@ -68,7 +69,7 @@
 ;; SEND_SIGKILL = "SendSIGKILL";
 ;; SLICE = "Slice";
 ;; STATUS_ERRNO = "StatusErrno";
-(spec/def ::status-text string?)
+;; STATUS_TEXT = "StatusText";
 ;; SUCCESS_EXIT_STATUS = "SuccessExitStatus";
 ;; SUPPLEMENTARY_GROUPS = "SupplementaryGroups";
 ;; SYSLOG_IDENTIFIER = "SyslogIdentifier";
@@ -94,7 +95,8 @@
 ;; WATCHDOG_USEC = "WatchdogUSec";
 ;; WORKING_DIRECTORY = "WorkingDirectory";
 
-(spec/def ::service (spec/keys :req-un [::main-pid ::environment ::environment-files ::status-text ::result]))
+(spec/def ::service (spec/merge ::unit/unit
+                                (spec/keys :req-un [::main-pid ::environment ::environment-files ::exec-main-status])))
 
 (spec/def ::service-instance #(= (type %) de.thjom.java.systemd.Service))
 
@@ -118,10 +120,10 @@
   [service-instance]
   {:pre [(spec/valid? ::service-instance service-instance)]
    :post [(spec/valid? ::service %)]}
-  {:main-pid (.getMainPID service-instance)
-   :environment (get-environment service-instance)
-   :environment-files (get-environment-files service-instance)
-   :status-text (.getStatusText service-instance)
-   :result (.getResult service-instance)})
+  (merge (unit/to-unit service-instance)
+         {:main-pid (.getMainPID service-instance)
+          :environment (get-environment service-instance)
+          :environment-files (get-environment-files service-instance)
+          :exec-main-status (.getExecMainStatus service-instance)}))
 
 
