@@ -1,5 +1,7 @@
 # clj-systemd
 
+[![Clojars Project](https://img.shields.io/clojars/v/clj-systemd.svg)](https://clojars.org/clj-systemd)
+
 Clojure interface to `systemd`
 
 ## License
