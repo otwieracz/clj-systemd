@@ -1,6 +1,7 @@
 (ns clj-systemd.manager-test
   (:require [clj-systemd.manager :as sut]
-            [clojure.test :refer :all]
+            [clj-systemd.systemd :as systemd]
+            [clojure.test :refer [deftest is testing]]
             [me.raynes.fs :as fs]
             [clojure.java.io :as io]))
 
@@ -28,18 +29,21 @@
   []
   (fs/delete (str service-path service-name)))
 
-(deftest start-unit-test "test service unit"
-  (create-test-service)
-  (testing "detection"
-    (sut/reload :user)
-    (Thread/sleep 500)
-    (is (= 0 (:main-pid (sut/get-service :user service-name)))))
-  (testing "starting"
-    (sut/start-unit :user service-name :fail)
-    ;; started
-    (is (pos-int? (:main-pid (sut/get-service :user service-name)))))
-  ;; after 10 seconds it should die, wait 11
-  (Thread/sleep (* 11 1000))
-  (testing "process exit detection"
-    (is (= 0 (:main-pid (sut/get-service :user service-name)))))
-  (delete-test-service))
+(deftest start-unit-test
+  (testing "test service unit"
+    (let [manager (sut/get-manager (systemd/get-systemd :user))]
+      (create-test-service)
+      (testing "detection"
+        (sut/reload manager)
+        (Thread/sleep 500)
+        (is (= 0 (:main-pid (sut/get-service manager service-name)))))
+      (testing "starting"
+        (sut/start-unit manager service-name :fail)
+       ;; started
+        (is (pos-int? (:main-pid (sut/get-service manager service-name)))))
+       ;; after 10 seconds it should die, wait 11
+      (Thread/sleep (* 11 1000))
+      (testing "process exit detection"
+        (is (= 0 (:main-pid (sut/get-service manager service-name)))))
+      (delete-test-service)
+      (systemd/disconnect :user))))
