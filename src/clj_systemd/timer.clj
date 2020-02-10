@@ -1,6 +1,5 @@
 (ns clj-systemd.timer
   (:require [clojure.spec.alpha :as spec]
-            [clj-time.core :as time]
             [clj-systemd.unit :as unit]
             [clj-systemd.utils :as utils]
             )

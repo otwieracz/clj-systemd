@@ -1,2 +1,0 @@
-(ns clj-systemd.core)
-
